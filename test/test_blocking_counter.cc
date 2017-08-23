@@ -13,8 +13,9 @@
 // limitations under the License.
 
 #include "test.h"
-
+#ifndef _MSC_VER
 #include <pthread.h>
+#endif
 #include <vector>
 
 #include "../internal/multi_thread_gemm.h"
@@ -33,7 +34,11 @@ class Thread {
   ~Thread() { Join(); }
 
   bool Join() const {
+#ifndef GEMMLOWP_STL_THREADING
     pthread_join(thread_, nullptr);
+#else
+    thread_.join();
+#endif
     return made_the_last_decrement_;
   }
 
@@ -54,7 +59,11 @@ class Thread {
 
   BlockingCounter* const blocking_counter_;
   const int number_of_times_to_decrement_;
+#ifndef GEMMLOWP_STL_THREADING
   pthread_t thread_;
+#else
+  std::thread thread_;
+#endif
   bool made_the_last_decrement_;
 };
 
@@ -73,7 +82,10 @@ void test_blocking_counter(BlockingCounter* blocking_counter, int num_threads,
     if (threads[i]->Join()) {
       num_threads_that_made_the_last_decrement++;
     }
+#ifndef GEMMLOWP_STL_THREADING
+	// stl on windows complains because the destructor does a join again.
     delete threads[i];
+#endif
   }
   Check(num_threads_that_made_the_last_decrement == 1);
 }

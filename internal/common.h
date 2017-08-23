@@ -18,12 +18,32 @@
 #ifndef GEMMLOWP_INTERNAL_COMMON_H_
 #define GEMMLOWP_INTERNAL_COMMON_H_
 
+#ifdef _WIN32
+#define GEMMLOWP_STL_THREADING
+#define GEMMLOWP_USE_MEMALIGN
+#endif
+#ifdef GEMMLOWP_STL_THREADING
+#include <mutex>
+#include <thread>
+#else
 #include <pthread.h>
+#endif
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
+
+#ifdef _WIN32
+inline void *memalign(size_t alignment, size_t size) {
+  return _aligned_malloc(size, alignment);
+}
+
+inline int posix_memalign(void **memptr, size_t alignment, size_t size) {
+  *memptr = _aligned_malloc(alignment, size);
+  return (*memptr == NULL);
+}
+#endif
 
 #include "../profiling/instrumentation.h"
 

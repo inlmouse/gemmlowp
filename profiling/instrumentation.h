@@ -24,7 +24,9 @@
 #ifndef GEMMLOWP_PROFILING_INSTRUMENTATION_H_
 #define GEMMLOWP_PROFILING_INSTRUMENTATION_H_
 
+#ifndef GEMMLOWP_STL_THREADING
 #include <pthread.h>
+#endif
 #include <cstdio>
 
 #ifndef GEMMLOWP_USE_STLPORT
@@ -70,6 +72,7 @@ inline void ReleaseBuildAssertion(bool condition, const char* msg) {
   }
 }
 
+#ifndef GEMMLOWP_STL_THREADING
 class Mutex {
  public:
   Mutex(const Mutex&) = delete;
@@ -84,6 +87,22 @@ class Mutex {
  private:
   pthread_mutex_t m;
 };
+#else
+class Mutex {
+public:
+  Mutex(const Mutex&) = delete;
+  Mutex& operator=(const Mutex&) = delete;
+
+  Mutex() { }
+  ~Mutex() { }
+
+  void Lock() { m.lock(); }
+  void Unlock() { m.unlock(); }
+
+private:
+    std::mutex m;
+};
+#endif
 
 class GlobalMutexes {
  public:
